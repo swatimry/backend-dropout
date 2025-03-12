@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+import cors from 'cors';
+
 import express from "express";
 import { connectdb } from "./config/database.js";
 import cookieParser from "cookie-parser";
@@ -7,6 +9,11 @@ import cookieParser from "cookie-parser";
 dotenv.config({path:".env"});
 connectdb();
 const app=express();
+app.use(cors({
+    credentials:true,
+    origin: "http://localhost:3000",
+    methods:["GET","POST","PUT","DELETE"],
+}));
 app.get('/',(req,res)=>{
     res.send("hello from server");
 })

@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 export const Checkauth = (req, res, next) => {
+  console.log("reached auth check")
   console.log("here");
   try {
     console.log("cookies",req.cookies);
@@ -25,6 +26,7 @@ export const Checkauth = (req, res, next) => {
         //why this ?
         req.user = payload;
     } catch(error) {
+       console.log(error)
         return res.status(401).json({
             success:false,
             message:'token is invalid',
@@ -61,6 +63,7 @@ export const isStudent = (req, res, next) => {
 
 // Middleware to allow access to the admin only
 export const isAdmin = (req, res, next) => {
+  console.log("reached admin check")
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({

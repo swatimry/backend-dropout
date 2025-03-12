@@ -1,28 +1,6 @@
 import mongoose from 'mongoose';
 
-// Define a sub-schema for the applied users
-const appliedUserSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', 
-    required: true
-  },
-  applicationDate: {
-    type: Date,
-    default: Date.now
-  },
-  status: {
-    type: String,
-    enum: ['Applied', 'Under Review', 'Accepted', 'Rejected'],
-    default: 'Applied'
-  },
-  documentsSubmitted: [{
-    type: String // List of document IDs or names submitted by the user
-  }],
-  additionalNotes: {
-    type: String // Any additional notes or remarks from the admin about the application
-  }
-});
+
 
 // Define the main Scheme schema
 const schemeSchema = new mongoose.Schema({
@@ -85,8 +63,11 @@ const schemeSchema = new mongoose.Schema({
   regionSpecific: {
     type: String
   },
-  // Array of applied users
-  appliedUsers: [appliedUserSchema]
+  appliedUsers: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to User model
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }, // Application status
+    appliedAt: { type: Date, default: Date.now } // Date when the user applied
+  }]
 });
 
 // Create and export the model

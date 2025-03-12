@@ -52,7 +52,7 @@ export const studentLogin = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email, role: 'student' });
+    let user = await User.findOne({ email, role: 'student' });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -69,13 +69,23 @@ export const studentLogin = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    user = user.toObject();
+            user.token = token;
+            user.password = undefined;
 
-    res.status(200).json({
-      success: true,
-      token,
-      user: { id: user._id, email: user.email, role: user.role },
-      message: 'Student logged in successfully',
-    });
+            const options = {
+                expires: new Date( Date.now() + 3*24*60*60*1000),
+                httpOnly:true,
+            }
+
+          return  res.cookie("token", token, options).status(200).json({
+                success:true,
+                token,
+                user,
+                message:'student Logged in successfully',
+            });
+
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -97,7 +107,13 @@ export const adminLogin = async (req, res) => {
         message: 'Admin not found',
       });
     }
-
+    let user = await User.findOne({ email, role: 'admin' });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'admin not registered',
+      });
+    }
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return res.status(403).json({
@@ -106,14 +122,24 @@ export const adminLogin = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign({ id: admin._id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    user = user.toObject();
+            user.token = token;
+            user.password = undefined;
 
-    res.status(200).json({
-      success: true,
-      token,
-      admin: { id: admin._id, email: admin.email },
-      message: 'Admin logged in successfully',
-    });
+            const options = {
+                expires: new Date( Date.now() + 3*24*60*60*1000),
+                httpOnly:true,
+            }
+
+          return  res.cookie("token", token, options).status(200).json({
+                success:true,
+                token,
+                user,
+                message:'student Logged in successfully',
+            });
+
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({
