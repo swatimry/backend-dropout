@@ -67,7 +67,8 @@ const schemeSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to User model
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }, // Application status
     appliedAt: { type: Date, default: Date.now } // Date when the user applied
-  }]
+  }],
+  documents:[{type:String}],
 });
 
 // Create and export the model

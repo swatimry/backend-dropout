@@ -4,7 +4,7 @@ import User from "../models/User.js";
 export const releaseScheme = async (req, res) => {
   try {
     // Destructure the required fields from the request body
-    const { title, description, eligibilityCriteria,lastDateOfSubmission } = req.body;
+    const { title, description, eligibilityCriteria,lastDateOfSubmission,documents } = req.body;
 
     // Check for required fields
     if (!title || !description || !eligibilityCriteria ) {
@@ -19,7 +19,8 @@ export const releaseScheme = async (req, res) => {
       title,
       description,
       eligibilityCriteria,
-      lastDateOfSubmission
+      lastDateOfSubmission,
+      documents
     });
 
     // Save the scheme to the database
@@ -72,14 +73,14 @@ export const applyToScheme = async (req, res) => {
   console.log("Reached applyToScheme function");
 
   try {
-    const { schemeId } = req.body;
-    const userId = req.user.id; // Assuming authentication middleware attaches user to req
+    const {schemename, schemeId, documentLinks } = req.body;
+    const userId = req.user.id;
 
     // Validate input
-    if (!schemeId) {
+    if (!schemeId || !documentLinks || Object.keys(documentLinks).length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Scheme ID is required",
+        message: "Scheme ID and all document links are required.",
       });
     }
 
@@ -88,7 +89,7 @@ export const applyToScheme = async (req, res) => {
     if (!scheme) {
       return res.status(404).json({
         success: false,
-        message: "Scheme not found",
+        message: "Scheme not found.",
       });
     }
 
@@ -97,43 +98,53 @@ export const applyToScheme = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "User not found.",
       });
     }
 
-    // Check if the user has already applied for this scheme
-    const existingApplication = user.applications.find(
-      (app) => app.scheme.toString() === schemeId
-    );
+    // Check if the user has already applied
+    const existingApplication = user.applications.find((app) => app.scheme.toString() === schemeId);
     if (existingApplication) {
       return res.status(400).json({
         success: false,
-        message: "You have already applied for this scheme",
+        message: "You have already applied for this scheme.",
       });
     }
 
-    // Add the application to the user's applications array
+    // Validate if all required documents have links
+    if (scheme.documents.some((doc) => !documentLinks[doc])) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide links for all required documents.",
+      });
+    }
+
+    // Add application with document links
     user.applications.push({
+      schemename:schemename,
       scheme: schemeId,
-      status: 'pending', // Initially, the status is 'pending'
+      status: "pending",
+      documentLinks,
     });
     await user.save();
-    // Update the scheme to add the user to appliedUsers array
-    scheme.appliedUsers.push({user:userId}); // Add the user ID to the appliedUsers array
+
+    // Update applied users in the scheme
+    scheme.appliedUsers.push({ user: userId, status: "pending" });
     await scheme.save();
 
     res.status(200).json({
       success: true,
-      message: "Successfully applied to the scheme",
+      message: "Successfully applied to the scheme.",
     });
   } catch (error) {
     console.error("Error applying to scheme:", error.message);
     res.status(500).json({
       success: false,
-      message: "An error occurred while applying to the scheme",
+      message: "An error occurred while applying to the scheme.",
     });
   }
 };
+
 /*try {
     const { schemeId, userId, status } = req.body; // Receive schemeId, userId, and status ("approved" or "rejected")
 
