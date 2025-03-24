@@ -1,29 +1,31 @@
 import Scheme from '../models/Scheme.js';
 import User from "../models/User.js";
-// Controller to submit or release a new scheme (Admin-only)
+
+
 export const releaseScheme = async (req, res) => {
   try {
-    // Destructure the required fields from the request body
-    const { title, description, eligibilityCriteria,lastDateOfSubmission,documents } = req.body;
+    const { title, description, eligibilityCriteria, ...optionalFields } = req.body;
 
     // Check for required fields
-    if (!title || !description || !eligibilityCriteria ) {
+    if (!title || !description || !eligibilityCriteria) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields (title, description, eligibility criteria)',
       });
     }
 
-    // Create a new scheme
-    const scheme = new Scheme({
-      title,
-      description,
-      eligibilityCriteria,
-      lastDateOfSubmission,
-      documents
-    });
+    // Build the scheme object dynamically
+    const schemeData = { title, description, eligibilityCriteria };
 
-    // Save the scheme to the database
+    // Include only non-empty fields from optionalFields
+    for (const [key, value] of Object.entries(optionalFields)) {
+      if (value !== undefined && value !== null && value !== '') {
+        schemeData[key] = value;
+      }
+    }
+
+    // Create and save the scheme
+    const scheme = new Scheme(schemeData);
     await scheme.save();
 
     res.status(201).json({
@@ -39,6 +41,8 @@ export const releaseScheme = async (req, res) => {
     });
   }
 };
+
+
 export const viewAllSchemes = async (req, res) => {
   console.log("reached viewwallfunction")
   try {
@@ -362,7 +366,7 @@ export const getparticular_studentapplication_details = async (req, res) => {
   console.log("reached get particular student details")
   try {
     const { studentId } = req.query;
-    const studentdetails = await User.findById(studentId).select("name email applications");
+    const studentdetails = await User.findById(studentId).select('name email phone address state district dob resumeLink education dropoutDetails applications');
     // Check if schemes exist
     if (!studentdetails || studentdetails.length === 0) {
       return res.status(404).json({
@@ -386,3 +390,56 @@ export const getparticular_studentapplication_details = async (req, res) => {
   }
 };
 
+
+
+export const updateStudentDetails = async (req, res) => {
+  console.log("Reached update student details");
+
+  try {
+    const { studentId } = req.params; 
+    console.log(studentId);
+    const updateData = req.body;
+
+    if (!studentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Student ID is required.",
+      });
+    }
+
+    // Prevent password update
+    if (updateData.password) {
+      console.warn(`Attempt to update password for studentId: ${studentId}`);
+      return res.status(400).json({
+        success: false,
+        message: "Password update is not allowed through this endpoint.",
+      });
+    }
+
+    // Update Student Details
+    const updatedUser = await User.findByIdAndUpdate(studentId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Student details updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating student details:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while updating student details.",
+      error: error.message,
+    });
+  }
+};

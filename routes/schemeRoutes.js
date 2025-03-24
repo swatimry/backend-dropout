@@ -1,5 +1,5 @@
 import express from 'express';
-import { releaseScheme ,viewAllSchemes,applyToScheme ,approveOrRejectApplication, getschemenames, getparticular_schemedetails, getparticular_studentapplication_details} from '../controllers/schemeController.js';
+import { releaseScheme ,viewAllSchemes,applyToScheme ,approveOrRejectApplication, getschemenames, getparticular_schemedetails, getparticular_studentapplication_details, updateStudentDetails} from '../controllers/schemeController.js';
 import { Checkauth, isAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -15,4 +15,5 @@ router.get('/getsc',Checkauth,isAdmin,()=>{
 router.get('/getschemenames',Checkauth,getschemenames)
 router.post('/getparticulardetails',Checkauth,getparticular_schemedetails)
 router.get('/getparticular_studentdetails',Checkauth,getparticular_studentapplication_details)
+router.put('/updatestudent/:studentId',Checkauth,updateStudentDetails);
 export default router;
